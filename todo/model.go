@@ -47,3 +47,21 @@ func put(t Todo) error {
 
 	return nil
 }
+
+func getAll()([]Todo, error){
+	var ts []Todo
+
+	selectQ := fmt.Sprintf("select * from %s", table)
+	rows, err := db.Query(selectQ)
+	
+	for rows.Next(){
+		t:= Todo{}
+	rows.Scan(&t.ID, &t.Title, &t.Status)
+	if err != nil {
+		return []Todo{}, err
+	}
+	ts = append(ts, t)
+}
+
+	return ts, nil
+}
