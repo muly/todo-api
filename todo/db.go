@@ -11,24 +11,24 @@ import (
 
 var db *sql.DB //NOTE: move db connection code to its own common repo when there are more than one model
 
+// InitDb initializes the package level database connection object
 func InitDb() error {
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-	sslmode := "disable"
-	host := "localhost"
-	port := "5433" //TODO: change this back to 5432
+	dbUser := os.Getenv("DB_USER")
+	dbHost := os.Getenv("DB_HOST")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
 
-	dburl := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, password, host, port, dbname, sslmode)
-
+	dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbUser, dbPassword, dbName)
 	var err error
-	db, err = sql.Open("postgres", dburl)
+	db, err = sql.Open("postgres", dbinfo)
 	if err != nil {
+		log.Println("sql.Open failed")
 		return err
 	}
 
 	err = db.Ping()
 	if err != nil {
+		log.Println("db.Ping failed")
 		return err
 	}
 

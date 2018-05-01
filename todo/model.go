@@ -26,19 +26,12 @@ type CreateTodo struct {
 }
 
 func get(id int) (Todo, error) {
+	var t Todo
+
 	selectQ := fmt.Sprintf("select * from %s where id = %v LIMIT 1", table, id)
-	rows, err := db.Query(selectQ)
+	err := db.QueryRow(selectQ).Scan(&t.ID, &t.Title, &t.Status)
 	if err != nil {
 		return Todo{}, err
-	}
-
-	var t Todo
-	for rows.Next() {
-		err = rows.Scan(&t.ID, &t.Title, &t.Status)
-		if err != nil {
-			return Todo{}, err
-		}
-		break // as we are expecting only one record
 	}
 
 	return t, nil
@@ -46,6 +39,7 @@ func get(id int) (Todo, error) {
 
 func put(t Todo) error {
 	updateQ := fmt.Sprintf("update %s set title = '%v', status = '%v' where id = %v", table, t.Title, t.Status, t.ID)
+
 	_, err := db.Query(updateQ)
 	if err != nil {
 		return err

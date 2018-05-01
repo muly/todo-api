@@ -19,7 +19,8 @@ services:
       DB_USER: postgres
       DB_PASSWORD: temporary_password
       DB_NAME: postgres
+      DB_PORT: 5432
     ports:
       - "8080:8080"
     volumes:
-      - ./:/go/src/github.com/rackerlabs/GoCodingChallenge
+      - /Users/muly/go/src:/go/src
