@@ -29,7 +29,7 @@ func main() {
 	router.GET("/", Status)
 	router.POST("/todos", todo.Create)
 	router.GET("/todos", todo.List)
-	router.PUT("/todos", todo.Update)
+	router.PUT("/todos/:id", todo.Update)
 
 	log.Printf("Starting server on port %s...\n", port)
 

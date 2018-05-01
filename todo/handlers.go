@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 
@@ -92,27 +91,13 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 // Update will allow a user to update an existing todo
-// /todos?id=
 // The supported body is {"title": "", "status": ""}
-func Update(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
-	vars, err := url.ParseQuery(r.URL.RawQuery)
+func Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
-		msg := "failed to parse query params:"
+		msg := "id must be an integer"
 		log.Printf("%s:%s", msg, err.Error())
 		http.Error(w, msg, http.StatusBadRequest)
-		return
-	}
-
-	var id int
-	if val, exists := vars["id"]; exists {
-		id, err = strconv.Atoi(val[0])
-		if err != nil {
-			msg := "id must be an integer"
-			log.Printf("%s:%s", msg, err.Error())
-			http.Error(w, msg, http.StatusBadRequest)
-			return
-		}
 	}
 
 	// read body
