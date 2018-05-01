@@ -98,7 +98,9 @@ func Update(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	vars, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		msg := "failed to parse query params:"
+		log.Printf("%s:%s", msg, err.Error())
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
@@ -106,7 +108,9 @@ func Update(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if val, exists := vars["id"]; exists {
 		id, err = strconv.Atoi(val[0])
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			msg := "id must be an integer"
+			log.Printf("%s:%s", msg, err.Error())
+			http.Error(w, msg, http.StatusBadRequest)
 			return
 		}
 	}
@@ -115,39 +119,55 @@ func Update(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	t := CreateTodo{}
 	err = json.NewDecoder(r.Body).Decode(&t)
 	if err != nil {
-		log.Fatalf("invalid json data: %s", err.Error())
-		http.Error(w, "invalid json data", http.StatusBadRequest)
+		msg := "invalid json data"
+		log.Printf("%s:%s", msg, err.Error())
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
 	// checks
 	if invalidMsg := isValid(t); invalidMsg != "" {
-		http.Error(w, invalidMsg, http.StatusBadRequest)
+		msg := "invalid todo message: " + invalidMsg
+		log.Printf("%s", msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
+	rec, err := get(id)
+	if err == sql.ErrNoRows {
+		msg := "id doesn't exist in db"
+		log.Printf("%s:%s", msg, err.Error())
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	} else if err != nil {
+		msg := ""
+		log.Printf("fetch (as part of verify) failed:%s:%s", msg, err.Error())
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+	log.Println("existing record from database:", rec)
 
 	// update todo
-	rec := Todo{ID: id, CreateTodo: t}
-
-	fmt.Println(rec)
-	err = put(rec)
+	err = put(Todo{ID: id, CreateTodo: t})
 	if err != nil {
-		log.Fatalf("update failed: %s", err.Error())
-		http.Error(w, "", http.StatusInternalServerError)
+		msg := "update failed:"
+		log.Printf("%s:%s", msg, err.Error())
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
-	rec, err = get(rec.ID)
+	rec, err = get(id)
 	if err != nil {
-		log.Fatalf("fetch failed: %s", err.Error())
-		http.Error(w, "", http.StatusInternalServerError)
+		msg := "fetch updated rec failed"
+		log.Printf("%s:%s", msg, err.Error())
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(rec)
 	if err != nil {
-		log.Fatalf("json encode failed: %s", err.Error())
-		http.Error(w, "", http.StatusInternalServerError)
+		msg := "json encode failed"
+		log.Printf("%s:%s", msg, err.Error())
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
