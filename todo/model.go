@@ -25,6 +25,24 @@ type CreateTodo struct {
 	Status string `json:"status"`
 }
 
+func getAll() ([]Todo, error) {
+	var ts []Todo
+
+	selectQ := fmt.Sprintf("select * from %s", table)
+	rows, err := db.Query(selectQ)
+
+	for rows.Next() {
+		t := Todo{}
+		rows.Scan(&t.ID, &t.Title, &t.Status)
+		if err != nil {
+			return []Todo{}, err
+		}
+		ts = append(ts, t)
+	}
+
+	return ts, nil
+}
+
 func get(id int) (Todo, error) {
 	var t Todo
 
@@ -37,6 +55,18 @@ func get(id int) (Todo, error) {
 	return t, nil
 }
 
+func post(t CreateTodo) (int, error) {
+	insertQ := fmt.Sprintf(`INSERT INTO todo (title, status) VALUES ('%s', '%s') RETURNING id`, t.Title, t.Status)
+
+	var todoID int
+	// Insert and get back newly created todo ID
+	if err := db.QueryRow(insertQ).Scan(&todoID); err != nil {
+		return 0, err
+	}
+
+	return todoID, nil
+}
+
 func put(t Todo) error {
 	updateQ := fmt.Sprintf("update %s set title = '%v', status = '%v' where id = %v", table, t.Title, t.Status, t.ID)
 
@@ -46,22 +76,4 @@ func put(t Todo) error {
 	}
 
 	return nil
-}
-
-func getAll()([]Todo, error){
-	var ts []Todo
-
-	selectQ := fmt.Sprintf("select * from %s", table)
-	rows, err := db.Query(selectQ)
-	
-	for rows.Next(){
-		t:= Todo{}
-	rows.Scan(&t.ID, &t.Title, &t.Status)
-	if err != nil {
-		return []Todo{}, err
-	}
-	ts = append(ts, t)
-}
-
-	return ts, nil
 }
